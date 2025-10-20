@@ -9,7 +9,7 @@ public class InteractionUI : MonoBehaviour
 
     private void Update()
     {
-        if (playerInteract.GetInteractableObject() != null)
+        if (playerInteract.GetInteractableObject() != null && !NPCInteractable.isDialogueActive)
         {
             Show(playerInteract.GetInteractableObject());
         }
