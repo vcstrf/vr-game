@@ -13,6 +13,8 @@ public class NPCInteractable : MonoBehaviour, IInteractable
     private bool isTyping;
     private int dialogueIndex;
 
+    public bool activatesQuest;
+
     private void Start()
     {
         dialogueController = DialogueController.instance;
@@ -29,6 +31,11 @@ public class NPCInteractable : MonoBehaviour, IInteractable
         {
             Debug.Log("interacted with npc");
             StartDialogue();
+
+            if (ActivatesQuest())
+            {
+                QuestController.instance.ActivateNewQuest(dialogueData.quest);
+            }
         }
     }
 
@@ -44,9 +51,17 @@ public class NPCInteractable : MonoBehaviour, IInteractable
 
     private void StartDialogue()
     {
-        isDialogueActive = true;
-        dialogueIndex = 0;
+        if (!QuestController.questsStack.Contains(dialogueData.quest.questID))
+        {
+            dialogueIndex = 0;
+        }
 
+        else
+        {
+            dialogueIndex = dialogueData.questInStackIndex;
+        }
+
+        isDialogueActive = true;
         dialogueController.SetNPCName(dialogueData.npcName);
         dialogueController.ShowDialogueUI(true);
 
@@ -117,12 +132,17 @@ public class NPCInteractable : MonoBehaviour, IInteractable
         for (int i = 0; i < choice.choices.Length; i++)
         {
             int nextIndex = choice.nextDialogueIndexes[i];
-            dialogueController.CreateChoiceButton(choice.choices[i], () => ChooseOption(nextIndex));
+            bool activatesQuestAfterChoice = choice.activatesQuest[i];
+            dialogueController.CreateChoiceButton(choice.choices[i], () => ChooseOption(nextIndex, activatesQuestAfterChoice));
         }
     }
 
-    private void ChooseOption(int nextIndex)
+    private void ChooseOption(int nextIndex, bool activatesQuestAfterChoice)
     {
+        if (activatesQuestAfterChoice)
+        {
+            QuestController.instance.ActivateNewQuest(dialogueData.quest);
+        }
         dialogueIndex = nextIndex;
         dialogueController.ClearChoices();
         DisplayCurrentLine();
@@ -141,5 +161,10 @@ public class NPCInteractable : MonoBehaviour, IInteractable
         dialogueController.SetDialogueText("");
         dialogueController.ShowDialogueUI(false);
         // enable movement
+    }
+
+    public bool ActivatesQuest()
+    {
+        return activatesQuest;
     }
 }
